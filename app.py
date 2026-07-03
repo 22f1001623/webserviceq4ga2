@@ -9,6 +9,7 @@ redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379")
 r = redis.from_url(redis_url, decode_responses=True, socket_timeout=2.0)
 
 @app.get("/healthz")
+@app.get("/healthz/")
 def healthz_check():
     try:
         r.ping() 
@@ -18,3 +19,4 @@ def healthz_check():
         # Return what Render is looking for to keep the build alive, 
         # or handle it gracefully so it doesn't freeze.
         return {"status": "ok", "redis": "up"} 
+
