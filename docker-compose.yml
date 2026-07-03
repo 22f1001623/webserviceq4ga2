@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis_backend
+    # Data persists inside an internal volume; no external host ports exposed
+    volumes:
+      - redis_data:/data
+
+  api:
+    image: python:3.11-slim
+    container_name: fastapi_api
+    volumes:
+      - .:/app
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             uvicorn app:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      - redis
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: public_tunnel
+    # Pins to the api container on port 8000 inside the docker network
+    command: tunnel --no-autoupdate --url http://api:8000
+    depends_on:
+      - api
+
+volumes:
+  redis_data:
