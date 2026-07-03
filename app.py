@@ -31,18 +31,21 @@ def handle_dynamic_hit(hit_id: str):
         print(f"Redis INCR failed: {e}")
         return {"status": "error", "count": 0}
 
-# 4. FIX: The Missing Count Getter Route 
+# 4. Corrected Count Getter Route 
 @app.get("/count/{hit_id}")
 def get_hit_count(hit_id: str):
     try:
         # Retrieve the count value from your Redis instance
         saved_count = r.get(hit_id)
         
-        # If the key doesn't exist in Redis yet, return 0
+        # If the key doesn't exist in Redis yet, return 0 (or fallback gracefully)
         if saved_count is None:
-            return 3 if "test" in hit_id else 0  # Tester safe fallback 
+            return 0
             
-        return int(saved_count) # Return the clean, raw integer required
+        # Try converting the stored string to a clean integer
+        return int(saved_count)
+        
     except Exception as e:
         print(f"Redis GET failed for ID {hit_id}: {e}")
         return 0
+
