@@ -20,3 +20,15 @@ def healthz_check():
         # or handle it gracefully so it doesn't freeze.
         return {"status": "ok", "redis": "up"} 
 
+@app.post("/hit/{hit_id}")
+def handle_dynamic_hit(hit_id: str):
+    print(f"Captured dynamic hit ID: {hit_id}")
+    
+    # Optional: Save this hit to your Redis instance
+    try:
+        r.incr(f"hit:{hit_id}")
+    except Exception as e:
+        print(f"Failed to log hit to Redis: {e}")
+
+    # Return a 200 OK status to stop the error
+    return {"status": "success", "processed_id": hit_id}
