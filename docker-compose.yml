@@ -1,37 +1,16 @@
-version: '3.8'
+FROM python:3.10-slim
 
-services:
-  redis:
-    image: redis:7-alpine
-    container_name: redis_backend
-    # Data persists inside an internal volume; no external host ports exposed
-    volumes:
-      - redis_data:/data
+WORKDIR /app
 
-  api:
-    image: python:3.11-slim
-    container_name: fastapi_api
-    volumes:
-      - .:/app
-    working_dir: /app
-    ports:
-      - "8000:8000"
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    command: >
-      sh -c "pip install --no-cache-dir -r requirements.txt &&
-             uvicorn app:app --host 0.0.0.0 --port 8000"
-    depends_on:
-      - redis
+# Copy and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-  tunnel:
-    image: cloudflare/cloudflared:latest
-    container_name: public_tunnel
-    # Pins to the api container on port 8000 inside the docker network
-    command: tunnel --no-autoupdate --url http://api:8000
-    depends_on:
-      - api
+# Copy the rest of your app code
+COPY . .
 
-volumes:
-  redis_data:
+# EXPOSE the port Render expects
+EXPOSE 8000
+
+# Force python to run the module directly
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
